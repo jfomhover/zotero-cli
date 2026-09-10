@@ -1,0 +1,24 @@
+# Source and development-only files
+src/
+test/
+spec/
+tsconfig.json
+.github/
+
+# Local credentials and environment files
+.env
+.env.*
+!.env.example
+
+# Local tooling and generated artifacts
+node_modules/
+coverage/
+*.tsbuildinfo
+*.tgz
+.npmrc
+.git/
+.gitignore
+
+# Keep the public package documentation and license available.
+!README.md
+!LICENSE
