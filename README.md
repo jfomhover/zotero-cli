@@ -2,6 +2,8 @@
 
 Read-only CLI for the Zotero Web API v3. Retrieve references, metadata, indexed full text, and attached PDF files without granting the CLI write access.
 
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## Install And Configure
 
 ```sh
