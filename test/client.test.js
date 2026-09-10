@@ -8,6 +8,7 @@ const config = {
   timeoutMs: 1000,
   format: "json",
   noInput: true,
+  redirectHosts: [],
 };
 
 test("attachment redirects strip the API key and allow Zotero storage", async () => {
@@ -26,6 +27,46 @@ test("attachment redirects strip the API key and allow Zotero storage", async ()
   );
   assert.equal(response.status, 200);
   assert.equal(requests[0].headers.get("Zotero-API-Key"), "secret-key");
+  assert.equal(requests[1].headers.get("Zotero-API-Key"), null);
+});
+
+test("attachment redirects allow Zotero S3 file storage", async () => {
+  const requests = [];
+  const fetcher = async (url, init) => {
+    requests.push({ url: String(url), headers: new Headers(init.headers) });
+    if (requests.length === 1)
+      return new Response(null, {
+        status: 302,
+        headers: {
+          location:
+            "https://zoterofilestorage.s3.us-east-1.amazonaws.com/object",
+        },
+      });
+    return new Response("pdf bytes", { status: 200 });
+  };
+  const response = await new ZoteroClient(config, fetcher).getBinary(
+    "/users/123/items/ABCD1234/file",
+  );
+  assert.equal(response.status, 200);
+  assert.equal(requests[1].headers.get("Zotero-API-Key"), null);
+});
+
+test("an explicit redirect host override is still HTTPS-only and strips the key", async () => {
+  const requests = [];
+  const fetcher = async (url, init) => {
+    requests.push({ url: String(url), headers: new Headers(init.headers) });
+    if (requests.length === 1)
+      return new Response(null, {
+        status: 302,
+        headers: { location: "https://future-storage.example.com/object" },
+      });
+    return new Response("pdf bytes", { status: 200 });
+  };
+  const response = await new ZoteroClient(
+    { ...config, redirectHosts: ["future-storage.example.com"] },
+    fetcher,
+  ).getBinary("/users/123/items/ABCD1234/file");
+  assert.equal(response.status, 200);
   assert.equal(requests[1].headers.get("Zotero-API-Key"), null);
 });
 

@@ -25,3 +25,16 @@ test("explicit env files do not override process environment credentials", async
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("redirect host overrides require bare DNS hostnames", async () => {
+  const { loadConfig } = await import("../dist/config.js");
+  assert.deepEqual(
+    loadConfig({ allowRedirectHost: ["Storage.Example.com"] }).redirectHosts,
+    ["storage.example.com"],
+  );
+  assert.throws(
+    () =>
+      loadConfig({ allowRedirectHost: ["https://storage.example.com/path"] }),
+    /invalid redirect hostname/,
+  );
+});

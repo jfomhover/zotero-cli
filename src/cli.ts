@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { createWriteStream, existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import { mkdir, rename, rm, stat } from "node:fs/promises";
 import { dirname, basename, resolve } from "node:path";
 import { pipeline } from "node:stream/promises";
@@ -15,7 +16,8 @@ import { CliError, exitCode, safeDisplay, safeMessage } from "./errors.js";
 import { login } from "./oauth.js";
 import { clearAuth, readAuth, writeAuth } from "./keychain.js";
 
-const version = "0.1.0";
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json") as { version: string };
 const program = new Command()
   .name("zotero")
   .description("Read-only CLI for the Zotero Web API")
@@ -32,13 +34,8 @@ program
     "--env-file <path>",
     "explicitly load ZOTERO_KEY/ZOTERO_USER_ID from a file",
   );
-const opts = (command: Command) => {
-  let root = command;
-  while (root.parent) root = root.parent;
-  return root.opts();
-};
 function context(command: Command): { config: Config; client: ZoteroClient } {
-  const config = loadConfig(opts(command));
+  const config = loadConfig(command.optsWithGlobals());
   return { config, client: new ZoteroClient(config) };
 }
 function out(config: Config, data: unknown, human: string) {
@@ -319,6 +316,12 @@ items
   .option("--scope <scope>", "user or group", "user")
   .option("--library-id <id>")
   .option("--output <path>")
+  .option(
+    "--allow-redirect-host <hostname>",
+    "allow an additional HTTPS redirect hostname for this download (repeatable)",
+    (hostname: string, previous: string[] = []) => [...previous, hostname],
+    [],
+  )
   .option("--force")
   .description("Download an attachment file")
   .action(async function (this: Command, key: string) {

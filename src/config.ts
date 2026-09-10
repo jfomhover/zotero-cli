@@ -8,6 +8,7 @@ export interface Config {
   timeoutMs: number;
   format: "human" | "json";
   noInput: boolean;
+  redirectHosts: string[];
 }
 
 /** Load only supported test/CI variables without overriding the process environment. */
@@ -42,6 +43,7 @@ export function loadConfig(options: {
   timeout?: string;
   format?: string;
   noInput?: boolean;
+  allowRedirectHost?: string[];
 }): Config {
   const userId = options.userId ?? process.env.ZOTERO_USER_ID;
   if (userId !== undefined && !/^\d+$/.test(userId))
@@ -55,12 +57,23 @@ export function loadConfig(options: {
   const format = (options.format ?? "human") as Config["format"];
   if (format !== "human" && format !== "json")
     throw new CliError("USAGE", "format must be human or json");
+  const redirectHosts = options.allowRedirectHost ?? [];
+  for (const host of redirectHosts) {
+    if (
+      !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(
+        host,
+      )
+    ) {
+      throw new CliError("USAGE", `invalid redirect hostname: ${host}`);
+    }
+  }
   return {
     key: process.env.ZOTERO_KEY,
     userId,
     timeoutMs: timeout * 1000,
     format,
     noInput: Boolean(options.noInput),
+    redirectHosts: redirectHosts.map((host) => host.toLowerCase()),
   };
 }
 

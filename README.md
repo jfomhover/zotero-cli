@@ -39,6 +39,8 @@ zotero items download ATTACH01 --output ./paper.pdf
 
 Use `--scope group --library-id GROUP_ID` for a group library. List commands return one page by default; use `--all` for a bounded multi-page read. The CLI never executes saved searches, uploads, writes, or deletes.
 
+If Zotero introduces a new documented storage hostname, the download error shows the blocked origin and path without signed query parameters. Allow that host for one invocation with `--allow-redirect-host storage.example.com`. The override accepts only an HTTPS hostname, never forwards the API key, and is not persisted.
+
 ## OAuth Status
 
 An OAuth 1.0a login flow exists for future use, but it is not the recommended setup path for this release. It requires registering an OAuth application with Zotero. For demos, local development, and CI, use `ZOTERO_KEY`.

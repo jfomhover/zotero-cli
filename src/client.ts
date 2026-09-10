@@ -9,6 +9,7 @@ const FILE_HOSTS = new Set([
   "files.zotero.net",
   "files.zotero.org",
   "storage.zotero.org",
+  "zoterofilestorage.s3.us-east-1.amazonaws.com",
 ]);
 
 /** Stable page envelope returned by list operations. */
@@ -132,10 +133,14 @@ export class ZoteroClient {
               "Zotero returned a redirect without a location",
             );
           const target = new URL(location, url);
-          if (target.protocol !== "https:" || !FILE_HOSTS.has(target.hostname))
+          if (
+            target.protocol !== "https:" ||
+            (!FILE_HOSTS.has(target.hostname) &&
+              !(this.config.redirectHosts ?? []).includes(target.hostname))
+          )
             throw new CliError(
               "PROVIDER",
-              "refusing attachment redirect to an untrusted host",
+              `refusing attachment redirect to an untrusted host: ${target.origin}${target.pathname}`,
             );
           const redirectedHeaders = new Headers(headers);
           redirectedHeaders.delete("Zotero-API-Key");
